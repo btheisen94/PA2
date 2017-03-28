@@ -103,7 +103,7 @@ public class WikiCrawler {
 
 			// currentPage is the first element of q
 			String currentPage = q.poll();
-			System.out.println(currentPage);
+			
 			// Access page here and get the html as a string
 			URL url = new URL(BASE_URL + currentPage);
 			InputStream in = url.openStream();
@@ -154,8 +154,15 @@ public class WikiCrawler {
 					}
 				}
 			}
-			out.write(fileOut);
-
+			
+			//Removes the new line character from the last edge
+			if(q.isEmpty()){
+				fileOut = fileOut.substring(0, fileOut.length() - 1);
+				out.write(fileOut);
+			} else { //Otherwise, writes the edge to the file with a newline char
+				out.write(fileOut);
+			}
+			
 			// Politeness check. For every 100 pages visited, we wait 3 seconds
 			// to reduce server load.
 			this.pageVisited++;
@@ -164,6 +171,7 @@ public class WikiCrawler {
 				Thread.sleep(3000);
 			}
 		}
+		
 		out.close();
 	}
 

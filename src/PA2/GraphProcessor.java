@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class GraphProcessor {
@@ -16,6 +15,10 @@ public class GraphProcessor {
 	
 
 	public GraphProcessor(String filePath) throws FileNotFoundException {
+		graphMaker(filePath);
+	}
+
+	private void graphMaker(String filePath) throws FileNotFoundException {
 		// Open a file, scanner that file, populate the hashmap
 
 		File file = new File(filePath);
@@ -52,72 +55,71 @@ public class GraphProcessor {
 		
 		in.close();
 		
-
 	}
 
-	private void graphMaker(String filePath) throws FileNotFoundException {
-		try{
-		File file = new File(filePath);
-		Scanner in = new Scanner(file);
-		this.numVertices = in.nextInt();
-		this.graph = new HashMap<String, Vertex>(this.numVertices, (float) 1.0);
-		
-		//String currentLine = in.nextLine();
-		String name = "";
-		String name2 = "";
-		while (in.hasNextLine()) {
-			Scanner lineScan = new Scanner(in.nextLine());
-			
-			name = lineScan.next();
-			if(!graph.containsKey(name)){
-				Vertex vertex = new Vertex(name);
-				graph.put(name, vertex);
-			}
-				
-			name2 = lineScan.next();
-			if(!graph.containsKey(name2)){
-				Vertex vertex2 = new Vertex(name2);
-				graph.put(name2, vertex2);
-				//Add edge from name -> name2
-				graph.get(name).edges.add(graph.get(name2));
-			} else {
-				//Add edge from name -> name2
-				graph.get(name).edges.add(graph.get(name2));
-			}
-			lineScan.close();
-		}
-		
-		in.close();
-		} catch(FileNotFoundException e){
-			System.out.println("File not there?" + e.getMessage());
-		}
-	}
-
+	/**
+	 * Returns the out degree of the given vertex.
+	 * @param v String representing the vertex
+	 * @return Number of edges leaving this vertex
+	 */
 	public int outDegree(String v) {
 		return this.graph.get(v).edges.size();
 	}
 
+	/**
+	 * Returns true if the given vertices are in the same strongly connected component
+	 * @param u First vertex
+	 * @param v Second vertex
+	 * @return Boolean, true if vertices are in the same component, false otherwise
+	 */
 	public boolean sameComponent(String u, String v) {
-
+		for(ArrayList<String> component : stronglyConnected){
+			if(component.contains(u) && component.contains(v)) return true;
+		}
 		return false;
 	}
-
+	
+	/**
+	 * 
+	 * @param v
+	 * @return
+	 */
 	public ArrayList<String> componentVertices(String v) {
 		ArrayList<String> vertices = new ArrayList<String>();
 
 		return vertices;
 	}
 
+	/**
+	 * The size of the largest strongly connected components of the graph.
+	 * @return largest component size
+	 */
 	public int largestComponent() {
-		
-		return 0;
+		ArrayList<String> temp = new ArrayList<String>();
+		int max = 0;
+		for(ArrayList<String> component : stronglyConnected){
+			if(component.size() > max){
+				temp = component;
+				max = temp.size();
+			}
+		}
+		return temp.size();
 	}
 
+	/**
+	 * Returns the number of strongly connected components in the graph.
+	 * @return Array of strongly connected components length
+	 */
 	public int numComponents() {
-
-		return 0;
+		return stronglyConnected.length;
 	}
 
+	/**
+	 * Returns the shortest path between the two given nodes. Returns the path in order as an array list
+	 * @param u The starting vertex
+	 * @param v The ending vertex
+	 * @return An ArrayList containing the shortest path between the two
+	 */
 	public ArrayList<String> bfsPath(String u, String v) {
 		ArrayList<String> path = new ArrayList<String>();
 
@@ -126,7 +128,7 @@ public class GraphProcessor {
 	
 	public static void main(String args[]) throws IOException, InterruptedException {
 
-		WikiCrawler w = new WikiCrawler("/wiki/Complexity_theory", 30, "WikiCS.txt");
+		WikiCrawler w = new WikiCrawler("/wiki/Complexity_theory", 10, "WikiCS.txt");
 		w.crawl();
 		
 		GraphProcessor gp = new GraphProcessor("/home/btheisen/workspace/PA2/WikiCS.txt");
