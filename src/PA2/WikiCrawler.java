@@ -20,7 +20,7 @@ public class WikiCrawler {
 	private String fileName;
 	// Used to make sure that only the first 'max' pages are visited
 	private int count;
-	// Used for politness when crawling wikipedia.
+	// Used for politeness when crawling wikipedia.
 	private int pageVisited;
 
 	/**

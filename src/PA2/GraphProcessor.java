@@ -101,15 +101,19 @@ public class GraphProcessor {
 	 * @return largest component size
 	 */
 	public int largestComponent() {
-		ArrayList<String> temp = new ArrayList<String>();
+		
 		int max = 0;
+		
 		for(ArrayList<String> component : stronglyConnected){
-			if(component.size() > max){
-				temp = component;
-				max = temp.size();
+			int temp = 0;
+			for(String site : component){
+				temp += outDegree(site);
+			}
+			if(temp > max){
+				max = temp;
 			}
 		}
-		return temp.size();
+		return max;
 	}
 
 	/**
@@ -124,26 +128,50 @@ public class GraphProcessor {
 	 * Returns the shortest path between the two given nodes. Returns the path in order as an array list
 	 * @param u The starting vertex
 	 * @param v The ending vertex
-	 * @return An ArrayList containing the shortest path between the two
+	 * @return An ArrayList containing the shortest path between the two, returns an empty list if there is no path
 	 */
 	public ArrayList<String> bfsPath(String u, String v) {
 		ArrayList<String> path = new ArrayList<String>();
+		//Handling if the same vertex is passed in for both parameters
+		if(u.equals(v)){
+			path.add(u);
+			path.add(v);
+			return path;
+		} else {
+			
+		}
 		//TODO
+		
+		/*
+		 * Input <G(V,E)>
+		 * 	Source S
+		 * 	Dist[s] = 0
+		 * 	T = {s}
+		 * 	while(T != v)
+		 * 		Consider all edges that go from T to v-T
+		 * 		For every <V,v>
+		 * 			
+		 */
+		
+		/*
+		 * Dist[v] will eventually hold the length of the shortest path from s to v
+		 */
 		return path;
 	}
 	
 	public static void main(String args[]) throws IOException, InterruptedException {
-
-		WikiCrawler w = new WikiCrawler("/wiki/Complexity_theory", 10, "WikiCS.txt");
+		long start = System.currentTimeMillis();
+		WikiCrawler w = new WikiCrawler("/wiki/Computer_Science", 100, "WikiCS.txt");
 		w.crawl();
-		
+		long end = System.currentTimeMillis();
+		System.out.println(end - start);
 		GraphProcessor gp = new GraphProcessor("/home/btheisen/workspace/PA2/WikiCS.txt");
 		//System.out.println(gp.graph.toString());
-		System.out.println(gp.outDegree("/wiki/Complexity_theory"));
-		System.out.println(gp.outDegree("/wiki/Complex_system"));
-		System.out.println(gp.outDegree("/wiki/Complex_systems"));
-		System.out.println(gp.outDegree("/wiki/Complexity_theory_and_organizations"));
-		System.out.println(gp.outDegree("/wiki/Complexity_economics"));
+		//System.out.println(gp.outDegree("/wiki/Complexity_theory"));
+		//System.out.println(gp.outDegree("/wiki/Complex_system"));
+		//System.out.println(gp.outDegree("/wiki/Complex_systems"));
+		//System.out.println(gp.outDegree("/wiki/Complexity_theory_and_organizations"));
+		//System.out.println(gp.outDegree("/wiki/Complexity_economics"));
 		
 	}
 }
