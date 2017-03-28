@@ -16,6 +16,7 @@ public class GraphProcessor {
 
 	public GraphProcessor(String filePath) throws FileNotFoundException {
 		graphMaker(filePath);
+		//Need to call DFS searching here to create the list of strongly connected components
 	}
 
 	private void graphMaker(String filePath) throws FileNotFoundException {
@@ -80,14 +81,19 @@ public class GraphProcessor {
 	}
 	
 	/**
-	 * 
-	 * @param v
-	 * @return
+	 * Returns all of the vertices of the strongly connected component that v belongs to.
+	 * @param v A vertex in a strongly connected component
+	 * @return An ArrayList of all the vertices in the same component as v
 	 */
 	public ArrayList<String> componentVertices(String v) {
-		ArrayList<String> vertices = new ArrayList<String>();
-
-		return vertices;
+		ArrayList<String> temp = new ArrayList<String>();
+		for(ArrayList<String> component : stronglyConnected){
+			if(component.contains(v)){
+				temp = component;
+				break;
+			}
+		}
+		return temp;
 	}
 
 	/**
@@ -122,7 +128,7 @@ public class GraphProcessor {
 	 */
 	public ArrayList<String> bfsPath(String u, String v) {
 		ArrayList<String> path = new ArrayList<String>();
-
+		//TODO
 		return path;
 	}
 	
