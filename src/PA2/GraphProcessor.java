@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class GraphProcessor {
 
@@ -200,6 +201,56 @@ public class GraphProcessor {
 		 */
 		return path;
 	}
+	
+	/**
+	 * Returns the shortest path between the two given nodes. Returns the path
+	 * in order as an array list
+	 * 
+	 * @param u
+	 *            The starting vertex
+	 * @param v
+	 *            The ending vertex
+	 * @return An ArrayList containing the shortest path between the two,
+	 *         returns an empty list if there is no path
+	 */
+	public ArrayList<String> dfsPath(String u, String v) {
+		ArrayList<String> path = new ArrayList<String>();
+		boolean found = false;
+		// Handling if the same vertex is passed in for both parameters
+		if (u.equals(v)) {
+			path.add(u);
+			path.add(v);
+			return path;
+		} else {
+			Stack<String> q = new Stack<String>();
+			List<String> visited = new LinkedList<String>();
+
+			q.add(u);
+			visited.add(u);
+			while (!q.isEmpty() && !found) {
+				String current = q.peek();
+				for (Vertex connected : this.graph.get((String) current).edges) {
+					if (connected.name.equals(v)) {
+						found = true;
+						//Add to path list? break both loops
+						//TODO
+					} else if (!visited.contains(connected.name)) {
+						// Add to queue
+						q.add(connected.name);
+						// Add to visited
+						visited.add(connected.name);
+						// Add to path listing thing
+					} else {
+						q.pop();
+					}
+				}
+			}
+		}
+				
+		return path;
+	}
+	
+	
 
 	public static void main(String args[]) throws IOException, InterruptedException {
 		long start = System.currentTimeMillis();
