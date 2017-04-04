@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.Stack;
@@ -250,6 +251,30 @@ public class GraphProcessor {
 		return path;
 	}
 	
+	public void computeOrder(){
+		
+	}
+	/*
+	 * Generate a graph with reversed edges
+	 */
+	public HashMap<String, Vertex> reverseGraph(){
+		HashMap<String, Vertex> graph_r = new HashMap<String, Vertex>(this.numVertices, (float) 1.0);
+		
+		for(Map.Entry<String, Vertex> vert : this.graph.entrySet()) {
+			String key = vert.getKey();
+			Vertex value = vert.getValue();
+			
+			for(Vertex connected : value.edges){
+				Vertex newVert = new Vertex(connected.name);
+				newVert.edges.add(value);
+				graph_r.put(connected.name, newVert);
+			}
+			
+		}
+		
+		
+		return graph_r;
+	}
 	
 
 	public static void main(String args[]) throws IOException, InterruptedException {
@@ -259,6 +284,7 @@ public class GraphProcessor {
 		long end = System.currentTimeMillis();
 		System.out.println(end - start);
 		GraphProcessor gp = new GraphProcessor("/home/btheisen/workspace/PA2/WikiCS.txt");
+		System.out.println(gp.reverseGraph().toString());
 		// System.out.println(gp.graph.toString());
 		// System.out.println(gp.outDegree("/wiki/Complexity_theory"));
 		// System.out.println(gp.outDegree("/wiki/Complex_system"));
