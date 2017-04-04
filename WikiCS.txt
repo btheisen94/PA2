@@ -434,6 +434,7 @@
 /wiki/List_of_pioneers_in_computer_science /wiki/Internet
 /wiki/List_of_pioneers_in_computer_science /wiki/Programming_language_theory
 /wiki/List_of_pioneers_in_computer_science /wiki/Undecidable_problem
+/wiki/List_of_pioneers_in_computer_science /wiki/Bletchley_Park
 /wiki/List_of_pioneers_in_computer_science /wiki/Computational_complexity_theory
 /wiki/List_of_pioneers_in_computer_science /wiki/Herman_Hollerith
 /wiki/List_of_pioneers_in_computer_science /wiki/History_of_computing_hardware
@@ -441,7 +442,6 @@
 /wiki/List_of_pioneers_in_computer_science /wiki/Gottfried_Leibniz
 /wiki/List_of_pioneers_in_computer_science /wiki/Artificial_intelligence
 /wiki/List_of_pioneers_in_computer_science /wiki/Ada_Lovelace
-/wiki/List_of_pioneers_in_computer_science /wiki/Bletchley_Park
 /wiki/List_of_pioneers_in_computer_science /wiki/Mechanical_calculator
 /wiki/List_of_pioneers_in_computer_science /wiki/Computer_Science
 /wiki/List_of_pioneers_in_computer_science /wiki/Timeline_of_computing

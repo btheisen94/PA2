@@ -53,13 +53,13 @@ public class WikiCrawler {
 		ArrayList<String> links = new ArrayList<String>();
 
 		// Create a scanner that parses doc and extracts the valid links
-		int index = doc.indexOf("<p>");
+/*		int index = doc.indexOf("<p>");
 		if (index == -1) {
 			index = doc.indexOf("<P>");
 		}
-		String newDoc = doc.substring(index, doc.length() - 1);
+		String newDoc = doc.substring(index, doc.length() - 1);*/
 
-		Scanner in = new Scanner(newDoc);
+		Scanner in = new Scanner(doc);
 		while (in.hasNext()) {
 
 			String check = in.next();
@@ -110,8 +110,13 @@ public class WikiCrawler {
 			BufferedReader html = new BufferedReader(new InputStreamReader(in));
 			String doc = "";
 			String line = html.readLine();
+			boolean contentCheck = false;
 			while (line != null) {
-				doc += " " + line;
+				
+				if((line.contains("<p>") || line.contains("<P>")) && !contentCheck){ contentCheck = true; }
+				if(line.contains("href=") && contentCheck){doc += line;}
+				
+				//doc += " " + line;
 				line = html.readLine();
 				//System.out.println(doc);
 			}
@@ -157,7 +162,7 @@ public class WikiCrawler {
 			
 			//Removes the new line character from the last edge
 			if(q.isEmpty()){
-				fileOut = fileOut.substring(0, fileOut.length() - 1);
+				//fileOut = fileOut.substring(0, fileOut.length() - 1);
 				out.write(fileOut);
 			} else { //Otherwise, writes the edge to the file with a newline char
 				out.write(fileOut);
