@@ -265,13 +265,16 @@ public class GraphProcessor {
 			Vertex value = vert.getValue();
 			
 			for(Vertex connected : value.edges){
+				// Empty edges list
+				Vertex oldVert = value;
+				oldVert.edges = new ArrayList<Vertex>();
+				
 				Vertex newVert = new Vertex(connected.name);
-				newVert.edges.add(value);
+				newVert.edges.add(oldVert);
 				graph_r.put(connected.name, newVert);
 			}
 			
 		}
-		
 		
 		return graph_r;
 	}
@@ -283,7 +286,7 @@ public class GraphProcessor {
 		w.crawl();
 		long end = System.currentTimeMillis();
 		System.out.println(end - start);
-		GraphProcessor gp = new GraphProcessor("/home/btheisen/workspace/PA2/WikiCS.txt");
+		GraphProcessor gp = new GraphProcessor("WikiCS.txt");
 		System.out.println(gp.reverseGraph().toString());
 		// System.out.println(gp.graph.toString());
 		// System.out.println(gp.outDegree("/wiki/Complexity_theory"));
