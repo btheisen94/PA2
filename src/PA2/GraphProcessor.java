@@ -4,13 +4,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
+//import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
-import java.util.Stack;
+//import java.util.Stack;
 
 public class GraphProcessor {
 
@@ -193,53 +194,76 @@ public class GraphProcessor {
 	 *         returns an empty list if there is no path
 	 */
 	public ArrayList<String> bfsPath(String u, String v) {
-		// TODO
+
 		ArrayList<String> path = new ArrayList<String>();
+		
 		boolean found = false;
 		// Handling if the same vertex is passed in for both parameters
 		if (u.equals(v)) {
 			path.add(u);
 			path.add(v);
 			return path;
+		} else if (!this.graph.containsKey(u) || !this.graph.containsKey(v)) {
+			return path;
 		} else {
+			
+			//Set each vertex visited flag to false
+			for(String flag : this.graph.keySet()){
+				this.graph.get(flag).marked = false;
+				this.graph.get(flag).previousVertex.clear();
+			}
+			
 			Queue<String> q = new LinkedList<String>();
-			List<String> visited = new LinkedList<String>();
+			//List<String> visited = new LinkedList<String>();
 
 			q.add(u);
-			visited.add(u);
+			this.graph.get(u).marked = true;
+			
 			while (!q.isEmpty() && !found) {
 
 				String current = q.poll();
+				
 				for (Vertex connected : this.graph.get((String) current).edges) {
-					if (connected.name.equals(v)) {
-						found = true;
-						//Add to path list? break both loops
-						//TODO
-					} else if (!visited.contains(connected.name)) {
+					System.out.println(connected.name + " " + v);
+					if (!this.graph.get(connected.name).marked) {
 						// Add to queue
+						if(connected.name.equals(v)){
+							this.graph.get(v).previousVertex.add(current);
+							found = true;
+							break;
+						}
 						q.add(connected.name);
 						// Add to visited
-						visited.add(connected.name);
+						this.graph.get(connected.name).marked = true;
+						// visited.add(connected.name);
 						// Add to path listing thing
+						this.graph.get(connected.name).previousVertex.add(current);
+						
 					} else {
-						// ????
+						if(connected.name.equals(v)){
+							this.graph.get(v).previousVertex.add(current);
+							found = true;
+							break;
+						}
+						this.graph.get(connected.name).previousVertex.add(current);
 					}
 				}
-
 			}
 		}
 
-		/*
-		 * Input <G(V,E)> Source S Dist[s] = 0 T = {s} while(T != v) Consider
-		 * all edges that go from T to v-T For every <V,v>
-		 * 
-		 */
-
-		/*
-		 * Dist[v] will eventually hold the length of the shortest path from s
-		 * to v
-		 */
-		return path;
+		if (found == false) {
+			return path;
+		} else {
+			//Setup up return path here and return.
+			path.add(v);
+			String current = v;
+			while(!current.equals(u)){
+				path.add(this.graph.get(current).previousVertex.get(0));
+				current = this.graph.get(current).previousVertex.get(0);
+			}
+			Collections.reverse(path);
+			return path;
+		}
 	}
 	
 	/**
@@ -254,7 +278,7 @@ public class GraphProcessor {
 	 *         returns an empty list if there is no path
 	 */
 	private String dfs(HashMap<String, Vertex> g, String v) {
-		ArrayList<String> component = new ArrayList<String>();
+		//ArrayList<String> component = new ArrayList<String>();
 		Vertex vref = g.get(v);
 		
 		vref.marked = true;
@@ -355,11 +379,13 @@ public class GraphProcessor {
 
 	public static void main(String args[]) throws IOException, InterruptedException {
 		long start = System.currentTimeMillis();
-		WikiCrawler w = new WikiCrawler("/wiki/Computer_Science", 100, "WikiCS.txt");
+		WikiCrawler w = new WikiCrawler("/wiki/Computer_Science", 500, "WikiCS.txt");
 		w.crawl();
 		long end = System.currentTimeMillis();
 		System.out.println(end - start);
 		GraphProcessor gp = new GraphProcessor("WikiCS.txt");
+		ArrayList<String> path = gp.bfsPath("/wiki/Computer", "/wiki/Algorithm");
+		System.out.println(path.toString());
 		// System.out.println(gp.graph.toString());
 		// System.out.println(gp.outDegree("/wiki/Complexity_theory"));
 		// System.out.println(gp.outDegree("/wiki/Complex_system"));

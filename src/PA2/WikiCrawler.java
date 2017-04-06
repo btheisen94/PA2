@@ -7,156 +7,183 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
 public class WikiCrawler {
-	
+
 	static final String BASE_URL = "https://en.wikipedia.org";
 	private int max;
 	private String seedUrl;
 	private String fileName;
-	//Used to make sure that only the first 'max' pages are visited
+	// Used to make sure that only the first 'max' pages are visited
 	private int count;
-	//Used for politness when crawling wikipedia.
+	// Used for politeness when crawling wikipedia.
 	private int pageVisited;
-	
+
 	/**
-	 * Constructs the crawler that will help create the web graph. 
-	 * @param seedUrl The first relative address or root vertex
-	 * @param max Max number of pages to be crawled
-	 * @param filename File name for the output graph
+	 * Constructs the crawler that will help create the web graph.
+	 * 
+	 * @param seedUrl
+	 *            The first relative address or root vertex
+	 * @param max
+	 *            Max number of pages to be crawled
+	 * @param filename
+	 *            File name for the output graph
 	 */
-	public WikiCrawler(String seedUrl, int max, String filename){
+	public WikiCrawler(String seedUrl, int max, String filename) {
 		this.seedUrl = seedUrl;
 		this.max = max;
 		this.fileName = filename;
 		this.count = 0;
 		this.pageVisited = 0;
 	}
-	
+
 	/**
 	 * This method extracts the links from the html page info contained in the
 	 * parameter doc.
-	 * @param doc - The 
+	 * 
+	 * @param doc
+	 *            - The
 	 * @return arrList - an ArrayList containing the valid links from the doc
 	 */
-	public ArrayList<String> extractLinks(String doc){
+	public ArrayList<String> extractLinks(String doc) {
 		ArrayList<String> links = new ArrayList<String>();
-		
-		//Create a scanner that parses doc and extracts the valid links
+/*
+		// Create a scanner that parses doc and extracts the valid links
 		int index = doc.indexOf("<p>");
-		if(index == -1){
+		if (index == -1) {
 			index = doc.indexOf("<P>");
 		}
 		String newDoc = doc.substring(index, doc.length() - 1);
-		
-		Scanner in = new Scanner(newDoc);
-		while(in.hasNext()){
-			
+*/
+		Scanner in = new Scanner(doc);
+		while (in.hasNext()) {
+
 			String check = in.next();
-			if(check.contains("href=")){
-				String link = check.substring(6,check.length() -1);
-				if(link.matches("(/wiki/)(.+)") && !(link.contains("#") || link.contains(":"))){
-					//Valid link add to arraylist
+			if (check.contains("href=")) {
+				String link = check.substring(6, check.length() - 1);
+				if (link.matches("(/wiki/)(.+)") && !(link.contains("#") || link.contains(":"))) {
+					// Valid link add to arraylist
 					links.add(link);
 				}
 			}
 		}
-		
+
 		in.close();
 		return links;
 	}
-	
+
 	/**
-	 * Crawls the wikipedia site starting from the seedURL and goes until the WikiCrawlers max number.
+	 * Crawls the wikipedia site starting from the seedURL and goes until the
+	 * WikiCrawlers max number.
+	 * 
 	 * @param seedURL
-	 * @throws IOException 
-	 * @throws InterruptedException 
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
-	public void crawl() throws IOException, InterruptedException{	
-		//for each node. call extract links and then go through those...
-		
-		//Filewriter to write the graph to a file
+	public void crawl() throws IOException, InterruptedException {
+		// for each node. call extract links and then go through those...
+
+		// Filewriter to write the graph to a file
 		FileWriter out = new FileWriter(this.fileName);
-		//First line of the file, the max number of pages to be visited.
+		// First line of the file, the max number of pages to be visited.
 		out.write(this.max + "\n");
-		
+
 		Queue<String> q = new LinkedList<String>();
-		List<String> visited = new LinkedList<String>();
-		
+		//List<String> visited = new LinkedList<String>();
+		HashMap<String, String> visitedHash = new HashMap<String, String>(this.max, (float) 1.0);
+
 		q.add(this.seedUrl);
-		visited.add(this.seedUrl);
+		//visited.add(this.seedUrl);
+		visitedHash.put(seedUrl, seedUrl);
 		this.count++;
-		
-		while(!q.isEmpty()){
-			
-			//currentPage is the first element of q
+
+		while (!q.isEmpty()) {
+
+			// currentPage is the first element of q
 			String currentPage = q.poll();
 			
-			//Access page here and get the html as a string
+			// Access page here and get the html as a string
 			URL url = new URL(BASE_URL + currentPage);
 			InputStream in = url.openStream();
 			BufferedReader html = new BufferedReader(new InputStreamReader(in));
 			String doc = "";
-			
 			String line = html.readLine();
-			while(line != null){
-				doc += " " + line;
+			boolean contentCheck = false;
+			while (line != null) {
+				//Set the check to true once the main content of the site is found.
+				//Only the links after the first <p> or <P> tag are to be used.
+				if((line.contains("<p>") || line.contains("<P>")) && !contentCheck){
+					contentCheck = true;
+				}
+				//Only keep the line if there is a wiki link in the line.
+				//Prevents unnecessary traversing of the website data.
+				if(line.contains("href=") && contentCheck){
+					doc += " " + line;
+				}
 				line = html.readLine();
 			}
 			
-
-			//Extracting all of the valid links from the currentPage
+			
+			// Extracting all of the valid links from the currentPage
 			ArrayList<String> links = extractLinks(doc);
-			
-			//Used for printing the graph to a file.
+
+			// Used for printing the graph to a file.
 			String fileOut = "";
-			
-			//For each of the valid links on the current page, if the link is not in visited,
-			//and we have not found our max number of pages yet, add it to the queue and visited
-			//and add the edge to the graph.
-			for(String link : links){
-				
-				if(!visited.contains((String) link) && this.count < this.max){
-					
-					//Adding the line containing the node and edge between them for the file graph
-					fileOut += currentPage + " " + link + "\n";									
-					
-					//Adding the page to the queue and visited list
+
+			// For each of the valid links on the current page, if the link is
+			// not in visited,
+			// and we have not found our max number of pages yet, add it to the
+			// queue and visited
+			// and add the edge to the graph.
+			for (String link : links) {
+
+				if (!visitedHash.containsKey((String) link) && this.count < this.max) {
+
+					// Adding the line containing the node and edge between them
+					// for the file graph
+					fileOut += currentPage + " " + link + "\n";
+
+					// Adding the page to the queue and visited list
 					q.add(link);
-					visited.add(link);
-					
-					//Incrementing the number of pages visited
+					//visited.add(link);
+					visitedHash.put(link, link);
+					// Incrementing the number of pages visited
 					this.count++;
-					
-				} 
-				//Checking to make sure there are no self loops and that the link is among our 
-				//visited pages.
-				else if(!link.equals(currentPage) && visited.contains((String) link)) {
-					//Checking to make sure a node does not have multiple edges to one other node
-					if(!fileOut.contains(link)){
-						fileOut += currentPage + " " + link + "\n";	
+
+				}
+				// Checking to make sure there are no self loops and that the
+				// link is among our
+				// visited pages.
+				else if (!link.equals(currentPage) && visitedHash.containsKey((String) link)) {
+					// Checking to make sure a node does not have multiple edges
+					// to one other node
+					if (!fileOut.contains(link)) {
+						fileOut += currentPage + " " + link + "\n";
 					}
 				}
 			}
-			out.write(fileOut);
-
-			//Politeness check. For every 100 pages visited, we wait 3 seconds to reduce server load.
+			
+			//Removes the new line character from the last edge
+			if(q.isEmpty()){
+				//fileOut = fileOut.substring(0, fileOut.length() - 1);
+				out.write(fileOut);
+			} else { //Otherwise, writes the edge to the file with a newline char
+				out.write(fileOut);
+			}
+			
+			// Politeness check. For every 100 pages visited, we wait 3 seconds
+			// to reduce server load.
 			this.pageVisited++;
-			if(this.pageVisited % 100 == 0){
-				System.out.println("Sleeping");
+			if (this.pageVisited % 100 == 0) {
 				Thread.sleep(3000);
 			}
 		}
+		
 		out.close();
 	}
-	
-	public static void main(String args[]) throws IOException, InterruptedException{
-		//String docs = "</div> <p><b>Computer science</b> is the <a href=\"/wiki/Science\" title=\"Science\">scientific</a>and practical approach to <a href=\"/wiki/Computation\" title=\"Computation\">computation</a>";
-		WikiCrawler w = new WikiCrawler("/wiki/Complexity_theory", 10, "WikiCS.txt");
-		w.crawl();
-	}
+
 }
