@@ -1,0 +1,18 @@
+4
+/wiki/Computer_Science /wiki/Computer
+/wiki/Computer_Science /wiki/Computation
+/wiki/Computer_Science /wiki/Procedure_(computer_science)
+/wiki/Computer_Science /wiki/Algorithm
+/wiki/Computer_Science /wiki/Information
+/wiki/Computer /wiki/Computer_Science
+/wiki/Computer /wiki/Computation
+/wiki/Computer /wiki/Procedure_(computer_science)
+/wiki/Computer /wiki/Algorithm
+/wiki/Computation /wiki/Computer_Science
+/wiki/Computation /wiki/Procedure_(computer_science)
+/wiki/Computation /wiki/Algorithm
+/wiki/Procedure_(computer_science) /wiki/Algorithm
+/wiki/Procedure_(computer_science) /wiki/Computer_Science
+/wiki/Algorithm /wiki/Computer_Science
+/wiki/Algorithm /wiki/Procedure_(computer_science)
+/wiki/Algorithm /wiki/Computer

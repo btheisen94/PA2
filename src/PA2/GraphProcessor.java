@@ -16,8 +16,11 @@ public class GraphProcessor {
 
 	public int numVertices;
 	public HashMap<String, Vertex> graph;
+	public HashMap<String, Vertex> r_graph;
+	public HashMap<String, Integer> FinishTime;
 	public ArrayList<String>[] stronglyConnected;
-
+	ArrayList<String> S = new ArrayList<String>();
+	public int counter = 0;
 	public GraphProcessor(String filePath) throws FileNotFoundException {
 		graphMaker(filePath);
 		// Need to call DFS searching here to create the list of strongly
@@ -31,6 +34,7 @@ public class GraphProcessor {
 		Scanner in = new Scanner(file);
 		this.numVertices = in.nextInt();
 		this.graph = new HashMap<String, Vertex>(this.numVertices, (float) 1.0);
+		this.r_graph = new HashMap<String, Vertex>(this.numVertices, (float) 1.0);
 
 		// String currentLine = in.nextLine();
 		String name = "";
@@ -39,12 +43,13 @@ public class GraphProcessor {
 			// Scanner lineScan = new Scanner(in.nextLine());
 
 			name = in.next();
-			// System.out.println(name);
+			/*
+			 * Normal Graph building
+			 */
 			if (!graph.containsKey(name)) {
 				Vertex vertex = new Vertex(name);
 				graph.put(name, vertex);
 			}
-
 			name2 = in.next();
 			// System.out.println(name2);
 			if (!graph.containsKey(name2)) {
@@ -56,6 +61,25 @@ public class GraphProcessor {
 				// Add edge from name -> name2
 				graph.get(name).edges.add(graph.get(name2));
 			}
+			
+			/*
+			 * Reverse Graph Building
+			 */
+			
+			if (!r_graph.containsKey(name)) { // Reverse Graph hasn't gotten name1
+				Vertex vertex = new Vertex(name);
+				r_graph.put(name, vertex);
+			}
+			if (!r_graph.containsKey(name2)) { // Reverse Graph hasn't gotten name 2
+				Vertex vertex2 = new Vertex(name2);
+				r_graph.put(name2, vertex2);
+				// Add edge from name2 -> name
+				r_graph.get(name2).edges.add(graph.get(name));
+			} else {
+				// Add edge from name2 -> name2
+				r_graph.get(name2).edges.add(graph.get(name));
+			}
+			
 			// lineScan.close();
 		}
 
@@ -214,69 +238,93 @@ public class GraphProcessor {
 	 * @return An ArrayList containing the shortest path between the two,
 	 *         returns an empty list if there is no path
 	 */
-	public ArrayList<String> dfsPath(String u, String v) {
-		ArrayList<String> path = new ArrayList<String>();
-		boolean found = false;
-		// Handling if the same vertex is passed in for both parameters
-		if (u.equals(v)) {
-			path.add(u);
-			path.add(v);
-			return path;
-		} else {
-			Stack<String> q = new Stack<String>();
-			List<String> visited = new LinkedList<String>();
-
-			q.add(u);
-			visited.add(u);
-			while (!q.isEmpty() && !found) {
-				String current = q.peek();
-				for (Vertex connected : this.graph.get((String) current).edges) {
-					if (connected.name.equals(v)) {
-						found = true;
-						//Add to path list? break both loops
-						//TODO
-					} else if (!visited.contains(connected.name)) {
-						// Add to queue
-						q.add(connected.name);
-						// Add to visited
-						visited.add(connected.name);
-						// Add to path listing thing
-					} else {
-						q.pop();
-					}
-				}
-			}
+	private void dfs(HashMap<String, Vertex> g, String v) {
+		Vertex vref = g.get(v);
+		
+		vref.marked = true;
+		
+		System.out.println(vref.name);
+		
+		for(Vertex u : vref.edges){
+			if (!g.get(u.name).marked) dfs(g, u.name);
 		}
-				
-		return path;
 	}
 	
-	public void computeOrder(){
+	private void fullDFS(HashMap<String, Vertex> g){
+		unmarkAll(g);
 		
-	}
-	/*
-	 * Generate a graph with reversed edges
-	 */
-	public HashMap<String, Vertex> reverseGraph(){
-		HashMap<String, Vertex> graph_r = new HashMap<String, Vertex>(this.numVertices, (float) 1.0);
-		
-		for(Map.Entry<String, Vertex> vert : this.graph.entrySet()) {
-			String key = vert.getKey();
-			Vertex value = vert.getValue();
-			
-			for(Vertex connected : value.edges){
-				// Empty edges list
-				Vertex oldVert = value;
-				oldVert.edges = new ArrayList<Vertex>();
-				
-				Vertex newVert = new Vertex(connected.name);
-				newVert.edges.add(oldVert);
-				graph_r.put(connected.name, newVert);
+		for(Map.Entry<String, Vertex> E: g.entrySet()){ 
+			if (E.getValue().marked){
+				dfs(g, E.getKey()); // Run DFS on every V
 			}
-			
+		}
+	}
+	private void finishDFS(Vertex v){
+		if(v.marked) return;
+		
+		Vertex vref = this.r_graph.get(v.name);
+		
+		vref.marked = true;
+		
+		for(Vertex u: vref.edges){
+			if(!u.marked){
+				this.dfs(this.graph, u.name);
+			}
 		}
 		
-		return graph_r;
+		this.counter += 1;
+		
+		this.FinishTime.put(vref.name, this.counter);
+		
+		
+	}
+	
+	private void SCC(HashMap<String, Vertex> g){
+		String[] orderedVertexes = sortFinished();
+		computeOrder(g);
+		unmarkAll(g);
+		
+		for(String vs: orderedVertexes){
+			ArrayList<String> S = new ArrayList<String>();
+			sccDFS(g, g.get(vs));
+		}
+	}
+	
+	private void sccDFS(HashMap<String, Vertex> g, Vertex v){
+		v.marked = true;
+		
+		this.S.add(v.name);
+		
+		for(Vertex u: v.edges){
+			if(!u.marked){
+				dfs(g, u.name);
+			}
+		}
+	}
+	
+	private String[] sortFinished(){
+		String[] orderedVertexes = new String[this.numVertices];
+		for(Map.Entry<String, Integer> E: this.FinishTime.entrySet()){ // Sort FinishedTime into an array of Strings, where the index is the finish time
+			orderedVertexes[E.getValue()] = E.getKey();
+		}
+		return orderedVertexes;
+	}
+	
+	public void unmarkAll(HashMap<String, Vertex> g){
+		for(Map.Entry<String, Vertex> E: g.entrySet()){ // unmark every V
+			E.getValue().marked = false;
+		}
+	}
+	
+	private void computeOrder(HashMap<String, Vertex> g){
+		unmarkAll(g); //Unmark all Vertexes
+		
+		this.counter = 0;
+		
+		for(Map.Entry<String, Vertex> E: g.entrySet()){ // call FinishDFS for unmarked Vertexes
+			finishDFS(E.getValue());
+		}
+		
 	}
 	
 
@@ -287,7 +335,6 @@ public class GraphProcessor {
 		long end = System.currentTimeMillis();
 		System.out.println(end - start);
 		GraphProcessor gp = new GraphProcessor("WikiCS.txt");
-		System.out.println(gp.reverseGraph().toString());
 		// System.out.println(gp.graph.toString());
 		// System.out.println(gp.outDegree("/wiki/Complexity_theory"));
 		// System.out.println(gp.outDegree("/wiki/Complex_system"));
