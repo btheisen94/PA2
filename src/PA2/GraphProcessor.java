@@ -18,11 +18,13 @@ public class GraphProcessor {
 	public HashMap<String, Vertex> graph;
 	public HashMap<String, Vertex> r_graph;
 	public HashMap<String, Integer> FinishTime;
-	public ArrayList<String>[] stronglyConnected;
-	ArrayList<String> S = new ArrayList<String>();
+	public ArrayList<ArrayList<String>> stronglyConnected;
+	public ArrayList<String> dfsPath;
+	public int s_index = 0;
 	public int counter = 0;
 	public GraphProcessor(String filePath) throws FileNotFoundException {
 		graphMaker(filePath);
+		fullDFS(this.graph);
 		// Need to call DFS searching here to create the list of strongly
 		// connected components
 	}
@@ -49,6 +51,10 @@ public class GraphProcessor {
 			if (!graph.containsKey(name)) {
 				Vertex vertex = new Vertex(name);
 				graph.put(name, vertex);
+			}
+			if(!in.hasNext()){
+				in.close();
+				return;
 			}
 			name2 = in.next();
 			// System.out.println(name2);
@@ -146,15 +152,24 @@ public class GraphProcessor {
 		int max = 0;
 
 		for (ArrayList<String> component : stronglyConnected) {
-			int temp = 0;
-			for (String site : component) {
-				temp += outDegree(site);
-			}
+			int temp = component.size();
 			if (temp > max) {
 				max = temp;
 			}
 		}
 		return max;
+	}
+	
+	public String maxOutDegree(){
+		int max = 0;
+		Vertex maxVert = null;
+		for(Map.Entry<String, Vertex> E: this.graph.entrySet()){
+			if (E.getValue().edges.size() > max){
+				max = E.getValue().edges.size();
+				maxVert = E.getValue();
+			}
+		}
+		return maxVert.name;
 	}
 
 	/**
@@ -163,7 +178,7 @@ public class GraphProcessor {
 	 * @return Array of strongly connected components length
 	 */
 	public int numComponents() {
-		return stronglyConnected.length;
+		return stronglyConnected.size();
 	}
 
 	/**
@@ -238,23 +253,27 @@ public class GraphProcessor {
 	 * @return An ArrayList containing the shortest path between the two,
 	 *         returns an empty list if there is no path
 	 */
-	private void dfs(HashMap<String, Vertex> g, String v) {
+	private String dfs(HashMap<String, Vertex> g, String v) {
+		ArrayList<String> component = new ArrayList<String>();
 		Vertex vref = g.get(v);
 		
 		vref.marked = true;
 		
-		System.out.println(vref.name);
+		this.dfsPath.add(vref.name);
 		
 		for(Vertex u : vref.edges){
 			if (!g.get(u.name).marked) dfs(g, u.name);
 		}
+		
+		return vref.name;
 	}
 	
 	private void fullDFS(HashMap<String, Vertex> g){
-		unmarkAll(g);
+		unmarkAll();
+		this.dfsPath = new ArrayList<String>();
 		
 		for(Map.Entry<String, Vertex> E: g.entrySet()){ 
-			if (E.getValue().marked){
+			if (!E.getValue().marked){
 				dfs(g, E.getKey()); // Run DFS on every V
 			}
 		}
@@ -263,6 +282,7 @@ public class GraphProcessor {
 		if(v.marked) return;
 		
 		Vertex vref = this.r_graph.get(v.name);
+		if(vref == null) return;
 		
 		vref.marked = true;
 		
@@ -272,34 +292,39 @@ public class GraphProcessor {
 			}
 		}
 		
+		unmarkAll();
+		
+		this.FinishTime.put(vref.name, this.counter);	
+		
 		this.counter += 1;
-		
-		this.FinishTime.put(vref.name, this.counter);
-		
 		
 	}
 	
-	private void SCC(HashMap<String, Vertex> g){
-		String[] orderedVertexes = sortFinished();
+	public void SCC(HashMap<String, Vertex> g){
+		this.FinishTime = new HashMap<String, Integer>();
+		this.stronglyConnected = new ArrayList<ArrayList<String>>();
 		computeOrder(g);
-		unmarkAll(g);
+		String[] orderedVertexes = sortFinished();
+		unmarkAll();
 		
 		for(String vs: orderedVertexes){
-			ArrayList<String> S = new ArrayList<String>();
 			sccDFS(g, g.get(vs));
 		}
 	}
 	
 	private void sccDFS(HashMap<String, Vertex> g, Vertex v){
-		v.marked = true;
-		
-		this.S.add(v.name);
-		
-		for(Vertex u: v.edges){
+		if(v == null) return;
+		Vertex vref = g.get(v.name);
+		vref.marked = true;
+		ArrayList<String> scc = new ArrayList<String>();
+		scc.add(v.name);
+		for(Vertex u: vref.edges){
 			if(!u.marked){
-				dfs(g, u.name);
+				scc.add(dfs(g, u.name));
 			}
 		}
+		this.stronglyConnected.add(scc);
+		
 	}
 	
 	private String[] sortFinished(){
@@ -310,19 +335,19 @@ public class GraphProcessor {
 		return orderedVertexes;
 	}
 	
-	public void unmarkAll(HashMap<String, Vertex> g){
-		for(Map.Entry<String, Vertex> E: g.entrySet()){ // unmark every V
+	public void unmarkAll(){
+		for(Map.Entry<String, Vertex> E: this.graph.entrySet()){ // unmark every V
 			E.getValue().marked = false;
 		}
 	}
 	
 	private void computeOrder(HashMap<String, Vertex> g){
-		unmarkAll(g); //Unmark all Vertexes
+		unmarkAll(); //Unmark all Vertexes
 		
 		this.counter = 0;
 		
 		for(Map.Entry<String, Vertex> E: g.entrySet()){ // call FinishDFS for unmarked Vertexes
-			finishDFS(E.getValue());
+			if(!E.getValue().marked) finishDFS(E.getValue());
 		}
 		
 	}
