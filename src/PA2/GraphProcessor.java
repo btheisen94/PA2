@@ -1,3 +1,7 @@
+/**
+ * @author Ben Theisen
+ * @author Michael Rupert
+ */
 package PA2;
 
 import java.io.File;
@@ -11,6 +15,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
 //import java.util.Stack;
 
 public class GraphProcessor {
@@ -23,11 +28,11 @@ public class GraphProcessor {
 	public ArrayList<String> dfsPath;
 	public int s_index = 0;
 	public int counter = 0;
+	
 	public GraphProcessor(String filePath) throws FileNotFoundException {
 		graphMaker(filePath);
-		fullDFS(this.graph);
-		// Need to call DFS searching here to create the list of strongly
-		// connected components
+		createSCCs();
+	
 	}
 
 	private void graphMaker(String filePath) throws FileNotFoundException {
@@ -117,7 +122,7 @@ public class GraphProcessor {
 	 *         otherwise
 	 */
 	public boolean sameComponent(String u, String v) {
-		for (ArrayList<String> component : stronglyConnected) {
+		for (ArrayList<String> component : this.stronglyConnected) {
 			if (component.contains(u) && component.contains(v))
 				return true;
 		}
@@ -134,7 +139,7 @@ public class GraphProcessor {
 	 */
 	public ArrayList<String> componentVertices(String v) {
 		ArrayList<String> temp = new ArrayList<String>();
-		for (ArrayList<String> component : stronglyConnected) {
+		for (ArrayList<String> component : this.stronglyConnected) {
 			if (component.contains(v)) {
 				temp = component;
 				break;
@@ -152,7 +157,7 @@ public class GraphProcessor {
 
 		int max = 0;
 
-		for (ArrayList<String> component : stronglyConnected) {
+		for (ArrayList<String> component : this.stronglyConnected) {
 			int temp = component.size();
 			if (temp > max) {
 				max = temp;
@@ -161,17 +166,6 @@ public class GraphProcessor {
 		return max;
 	}
 	
-	public String maxOutDegree(){
-		int max = 0;
-		Vertex maxVert = null;
-		for(Map.Entry<String, Vertex> E: this.graph.entrySet()){
-			if (E.getValue().edges.size() > max){
-				max = E.getValue().edges.size();
-				maxVert = E.getValue();
-			}
-		}
-		return maxVert.name;
-	}
 
 	/**
 	 * Returns the number of strongly connected components in the graph.
@@ -179,7 +173,7 @@ public class GraphProcessor {
 	 * @return Array of strongly connected components length
 	 */
 	public int numComponents() {
-		return stronglyConnected.size();
+		return this.stronglyConnected.size();
 	}
 
 	/**
@@ -266,132 +260,103 @@ public class GraphProcessor {
 		}
 	}
 	
+
 	/**
-	 * Returns the shortest path between the two given nodes. Returns the path
-	 * in order as an array list
-	 * 
-	 * @param u
-	 *            The starting vertex
-	 * @param v
-	 *            The ending vertex
-	 * @return An ArrayList containing the shortest path between the two,
-	 *         returns an empty list if there is no path
+	 * Helper method to unmark (visited = false) all the vertices in the graph.
 	 */
-	private String dfs(HashMap<String, Vertex> g, String v) {
-		//ArrayList<String> component = new ArrayList<String>();
-		Vertex vref = g.get(v);
-		
-		vref.marked = true;
-		
-		this.dfsPath.add(vref.name);
-		
-		for(Vertex u : vref.edges){
-			if (!g.get(u.name).marked) dfs(g, u.name);
-		}
-		
-		return vref.name;
-	}
-	
-	private void fullDFS(HashMap<String, Vertex> g){
-		unmarkAll();
-		this.dfsPath = new ArrayList<String>();
-		
-		for(Map.Entry<String, Vertex> E: g.entrySet()){ 
-			if (!E.getValue().marked){
-				dfs(g, E.getKey()); // Run DFS on every V
-			}
-		}
-	}
-	private void finishDFS(Vertex v){
-		if(v.marked) return;
-		
-		Vertex vref = this.r_graph.get(v.name);
-		if(vref == null) return;
-		
-		vref.marked = true;
-		
-		for(Vertex u: vref.edges){
-			if(!u.marked){
-				this.dfs(this.graph, u.name);
-			}
-		}
-		
-		unmarkAll();
-		
-		this.FinishTime.put(vref.name, this.counter);	
-		
-		this.counter += 1;
-		
-	}
-	
-	public void SCC(HashMap<String, Vertex> g){
-		this.FinishTime = new HashMap<String, Integer>();
-		this.stronglyConnected = new ArrayList<ArrayList<String>>();
-		computeOrder(g);
-		String[] orderedVertexes = sortFinished();
-		unmarkAll();
-		
-		for(String vs: orderedVertexes){
-			sccDFS(g, g.get(vs));
-		}
-	}
-	
-	private void sccDFS(HashMap<String, Vertex> g, Vertex v){
-		if(v == null) return;
-		Vertex vref = g.get(v.name);
-		vref.marked = true;
-		ArrayList<String> scc = new ArrayList<String>();
-		scc.add(v.name);
-		for(Vertex u: vref.edges){
-			if(!u.marked){
-				scc.add(dfs(g, u.name));
-			}
-		}
-		this.stronglyConnected.add(scc);
-		
-	}
-	
-	private String[] sortFinished(){
-		String[] orderedVertexes = new String[this.numVertices];
-		for(Map.Entry<String, Integer> E: this.FinishTime.entrySet()){ // Sort FinishedTime into an array of Strings, where the index is the finish time
-			orderedVertexes[E.getValue()] = E.getKey();
-		}
-		return orderedVertexes;
-	}
-	
-	public void unmarkAll(){
+	private void unmarkAll(){
 		for(Map.Entry<String, Vertex> E: this.graph.entrySet()){ // unmark every V
 			E.getValue().marked = false;
 		}
 	}
 	
-	private void computeOrder(HashMap<String, Vertex> g){
-		unmarkAll(); //Unmark all Vertexes
+	/**
+	 * DFS traversal to find the SCCs of the graph
+	 * 
+	 * @param v Vertex name
+	 * @param component Holds the vertices string names of the strongly connected component
+	 */
+	private void utilDFS(String v, ArrayList<String> component){
+		this.r_graph.get(v).marked = true;
+		component.add(v);
 		
-		this.counter = 0;
-		
-		for(Map.Entry<String, Vertex> E: g.entrySet()){ // call FinishDFS for unmarked Vertexes
-			if(!E.getValue().marked) finishDFS(E.getValue());
+		for(Vertex x : this.r_graph.get(v).edges){
+			if(!this.r_graph.get(x.name).marked){
+				utilDFS(x.name, component);
+			}
 		}
+	}
+	
+	/**
+	 * Computes the order of the vertices in the graph, used for finding the SCCs
+	 * @param v Vertex name
+	 * @param stack Holds the order of the vertices as they are visited
+	 */
+	private void fillOrder(String v, Stack<String> stack){
+		this.graph.get(v).marked = true;
+		
+		for(Vertex x : this.graph.get(v).edges){
+			if(!this.graph.get(x.name).marked){
+				fillOrder(x.name, stack);
+			}
+		}
+		stack.push(v);
+	}
+	
+	/**
+	 * Creates the ArrayLists that contain the strongly connected components.
+	 */
+	private void createSCCs(){
+		Stack<String> stack = new Stack<String>();
+		this.stronglyConnected = new ArrayList<ArrayList<String>>();
+		
+		unmarkAll();
+		
+		for(String x : this.graph.keySet()){
+			if(!this.graph.get(x).marked){
+				fillOrder(x, stack);
+			}
+		}
+		
+		unmarkAll();
+		
+		while(!stack.empty()){
+			String current = stack.pop();
+			ArrayList<String> component = new ArrayList<String>();
+			
+			if(!this.r_graph.get(current).marked){
+				utilDFS(current, component);
+				this.stronglyConnected.add(component);
+				//System.out.println(this.stronglyConnected.size());
+				//System.out.println(component.toString());
+			}
+		}
+		
+		
 		
 	}
 	
-
 	public static void main(String args[]) throws IOException, InterruptedException {
-		long start = System.currentTimeMillis();
-		WikiCrawler w = new WikiCrawler("/wiki/Computer_Science", 500, "WikiCS.txt");
-		w.crawl();
-		long end = System.currentTimeMillis();
-		System.out.println(end - start);
+		//long start = System.currentTimeMillis();
+		//WikiCrawler w = new WikiCrawler("/wiki/Computer_Science", 500, "WikiCS.txt");
+		//w.crawl();
+		//long end = System.currentTimeMillis();
+		//System.out.println(end - start);
 		GraphProcessor gp = new GraphProcessor("WikiCS.txt");
-		ArrayList<String> path = gp.bfsPath("/wiki/Computer", "/wiki/Algorithm");
-		System.out.println(path.toString());
-		// System.out.println(gp.graph.toString());
-		// System.out.println(gp.outDegree("/wiki/Complexity_theory"));
-		// System.out.println(gp.outDegree("/wiki/Complex_system"));
-		// System.out.println(gp.outDegree("/wiki/Complex_systems"));
-		// System.out.println(gp.outDegree("/wiki/Complexity_theory_and_organizations"));
-		// System.out.println(gp.outDegree("/wiki/Complexity_economics"));
+		//ArrayList<String> path = gp.bfsPath("/wiki/Computer", "/wiki/Algorithm");
+		//System.out.println(path.toString());
+		//gp.createSCCs();
+		int max = 0;
+		String maxVertex = "";
+		for(String x : gp.graph.keySet()){
+			if(gp.graph.get(x).edges.size() > max){
+				max = gp.graph.get(x).edges.size();
+				maxVertex = x;
+			}
+		}
+		System.out.println("Vertex with largest out degree: " + maxVertex + ", with a degree of: " + max);
+		System.out.println("Number of components: " + gp.numComponents());
+		System.out.println("Largest component: " + gp.largestComponent());
 
 	}
 }

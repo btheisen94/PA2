@@ -1,3 +1,7 @@
+/**
+ * @author Ben Theisen
+ * @author Michael Rupert
+ */
 package PA2;
 
 import java.io.BufferedReader;
